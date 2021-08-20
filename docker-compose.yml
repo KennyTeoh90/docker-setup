@@ -1,0 +1,51 @@
+version: "3.9"  # optional since v1.27.0
+
+networks: 
+  dockerSetup:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: ${PROJECT_NAME}_nginx
+    ports: 
+      - "8088:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on: 
+      - php    # the web server need to relies on php and mysql up & ready before it initializa 
+      - mysql
+    networks: 
+      - dockerSetup
+
+  mysql:
+    platform: linux/x86_64
+    image: mysql
+    container_name: ${PROJECT_NAME}_mysql
+    restart: unless-stopped   # prevent mysql restart unless the container is stop
+    tty: true # enable shell bash terminal
+    ports: 
+      - "3306:3306"
+    volumes: 
+      - ./mysql:/var/lib/mysql
+    environment: 
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      SERVICE_TAG: dev
+      SERVICE_NAME: mysql
+    networks:
+      - dockerSetup
+
+  php:
+    build:    # docker does not have php image. Need to build https://hub.docker.com/_/php
+      context: . # the directory to search for (current directory)
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME}_php
+    volumes: 
+      - .:/var/www/html
+    ports: 
+      - "9000:9000"
+    networks:
+      - dockerSetup
