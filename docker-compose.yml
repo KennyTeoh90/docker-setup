@@ -49,3 +49,13 @@ services:
       - "9000:9000"
     networks:
       - dockerSetup
+
+  npm:
+    image: node:16.6
+    container_name: ${PROJECT_NAME}_npm
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    entrypoint: ['npm']
+    networks:
+      - dockerSetup
